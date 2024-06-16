@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SSE Example</title>
+</head>
+<body>
+  <h1>Sensor Data</h1>
+  <div id="sensorData"></div>
+  <script>
+    if (!!window.EventSource) {
+      var source = new EventSource('http://<ESP32_IP_ADDRESS>');
+
+      source.onmessage = function(event) {
+        document.getElementById("sensorData").innerHTML = event.data;
+        console.log(event.data);
+      };
+    } else {
+      console.log("Your browser does not support Server-Sent Events.");
+    }
+  </script>
+</body>
+</html>
