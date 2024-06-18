@@ -19,6 +19,7 @@ public:
   void configureSensor();
   void calibrate();
   SensorData readData();
+  SensorData readMockData();
   void printData(const SensorData& data);
   String getDataAsJson(const SensorData& data);
   void end(); // Method to stop the I2C interface

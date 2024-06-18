@@ -7,7 +7,6 @@ TLE493D::TLE493D(int sdaPin, int sclPin, uint8_t address)
 //   : wire(wire), sdaPin(sdaPin), sclPin(sclPin), address(address), xOffset(0), yOffset(0), zOffset(0) {}
 
 void TLE493D::begin() {
-  wire.begin(sdaPin, sclPin, 400000);
   configureSensor();
   calibrate();
 }
@@ -51,7 +50,6 @@ void TLE493D::calibrate() {
   }
   Serial.println();
   wire.end();
-
 }
 
 SensorData TLE493D::readData() {
@@ -72,6 +70,16 @@ SensorData TLE493D::readData() {
   wire.end();
 
   return data;
+}
+
+SensorData TLE493D::readMockData() {
+    // 模拟读取传感器数据
+    SensorData data;
+    data.X = random(-2048, 2047); // 12位的int16_t范围是 -2048 到 2047
+    data.Y = random(-2048, 2047); // 12位的int16_t范围是 -2048 到 2047
+    data.Z = random(-2048, 2047); // 12位的int16_t范围是 -2048 到 2047
+    data.T = random(0, 1023);     // 10位的uint16_t范围是 0 到 1023
+    return data;
 }
 
 void TLE493D::printData(const SensorData& data) {
