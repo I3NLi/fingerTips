@@ -9,9 +9,9 @@ const char* password = "FingerTips";
 WiFiServer server(80); // Set web server port number to 80
 
 /** Sensor */
-const int SDA_PINS[] = {35}; // 根据 ESP32 的引脚定义
+const int SDA_PINS[] = {26,27,14}; // 根据 ESP32 的引脚定义
 const int NUM_SENSORS = sizeof(SDA_PINS) / sizeof(SDA_PINS[0]);
-const int SCL_PIN = 18; // 例如使用的 SCL 引脚
+const int SCL_PIN = 22; // 例如使用的 SCL 引脚
 TLE493D* sensors[NUM_SENSORS];
 
 void setup() {
@@ -57,6 +57,7 @@ void loop() {
               client.println("Content-Type: text/event-stream");
               client.println("Cache-Control: no-cache");
               client.println("Connection: keep-alive");
+              client.println("Access-Control-Allow-Origin: *");
               client.println();
               requestPath = "/sse";
             } else if (header.indexOf("GET /data") >= 0) {
@@ -64,6 +65,7 @@ void loop() {
               client.println("HTTP/1.1 200 OK");
               client.println("Content-Type: application/json");
               client.println("Connection: close");
+              client.println("Access-Control-Allow-Origin: *");
               client.println();
               requestPath = "/data";
             } else {
