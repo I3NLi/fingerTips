@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sensor Heatmap</title>
     <style>
         .canvas-container {
@@ -40,18 +40,41 @@
             <canvas id="canvas4" width="500" height="500"></canvas>
         </div>
     </div>
+
+    <br />
+    <div>
+        <h1>Sensor Data</h1>
+        <div id="sensorData"></div>
+    </div>
+
     <script>
-        const defaultCenters = [{ x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }];
+        if (!window.EventSource) {
+            console.log("Your browser does not support Server-Sent Events.");
+        }
+
+        const defaultCenters = [
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+        ];
         const defaultRadii = [0.0, 0.0, 0.0, 0.0, 0.0];
 
         const range = 255;
-        const centers = [{ x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }];
+        const centers = [
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+            { x: 0.5, y: 0.5 },
+        ];
         const radii = [0.1, 0.1, 0.1, 0.1, 0.1];
         const temperature = [0, 0, 0, 0, 0];
 
         const canvases = [];
         for (let i = 0; i < 5; i++) {
-            canvases.push(document.getElementById(`canvas${i}`).getContext('2d'));
+            canvases.push(document.getElementById(`canvas${i}`).getContext("2d"));
         }
 
         function interpolateColor(value) {
@@ -70,7 +93,9 @@
                     const dx = (x / 500 - center.x) * 500;
                     const dy = (y / 500 - center.y) * 500;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    const intensity = Math.exp(-dist * dist / (2 * radius * radius * 2500));
+                    const intensity = Math.exp(
+                        (-dist * dist) / (2 * radius * radius * 2500)
+                    );
 
                     const index = (y * 500 + x) * 4;
                     const color = interpolateColor(intensity);
@@ -90,29 +115,26 @@
             ctx.fillText(`T: ${temp}`, 20, 30);
         }
 
-        function updateHeatmaps() {
-            for (let i = 0; i < 5; i++) {
-                drawHeatmap(canvases[i], centers[i], radii[i], temperature[i]);
-            }
-        }
-
-        const source = new EventSource('http://192.168.4.1/data');
-
-        source.onmessage = function(event) {
+        const source = new EventSource("http://192.168.4.1/sse");
+        console.log("event start");
+        source.onmessage = function (event) {
             const sensors = JSON.parse(event.data);
+            
+            //document.getElementById("sensorData").innerHTML = event.data;
+            //console.log(sensors)
             let i = 0;
-
             for (const key in sensors) {
                 if (key === "timestamp") continue;
                 const sensor = sensors[key];
-                centers[i].x = defaultCenters[i].x + Math.abs(sensor.x) / range * 0.2;
-                centers[i].y = defaultCenters[i].y + Math.abs(sensor.y) / range * 0.2;
-                radii[i] = Math.abs(sensor.z) / range * 0.3;
+                centers[i].x =
+                    defaultCenters[i].x + (Math.abs(sensor.x) / range) * 0.2;
+                centers[i].y =
+                    defaultCenters[i].y + (Math.abs(sensor.y) / range) * 0.2;
+                radii[i] = (Math.abs(sensor.z) / range) * 0.5;
                 temperature[i] = sensor.t;
+                drawHeatmap(canvases[i], centers[i], radii[i], temperature[i]);
                 i++;
             }
-
-            updateHeatmaps();
         };
     </script>
 </body>
