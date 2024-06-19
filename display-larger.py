@@ -3,12 +3,13 @@ from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import requests
 import threading
+import time
 
 # 定义初始值
 defaultCenters = [(0.5, 0.5), (0.5, 0.5), (0.5, 0.5), (0.5, 0.5), (0.5, 0.5)]
 defaultRadii = [0.0, 0.0, 0.0, 0.0, 0.0]
 
-range=255
+range = 255
 
 centers = [(0.5, 0.5), (0.5, 0.5), (0.5, 0.5), (0.5, 0.5), (0.5, 0.5)]
 radii = [0.1, 0.1, 0.1, 0.1, 0.1]
@@ -27,8 +28,8 @@ texts = []
 
 for i, ax in enumerate(axes):
     # 创建网格数据，覆盖整个画布
-    x = np.linspace(0, 1, 1000)
-    y = np.linspace(0, 1, 1000)
+    x = np.linspace(0, 1, 500)
+    y = np.linspace(0, 1, 500)
     X, Y = np.meshgrid(x, y)
     Z = np.exp(-((X - centers[i][0]) ** 2 + (Y - centers[i][1]) ** 2) / (2 * (radii[i] ** 2)))
     
@@ -46,28 +47,40 @@ for i, ax in enumerate(axes):
     ax.set_aspect('equal')
     ax.set_title(f'Sensor {i+1}')
 
+# 记录上次更新时间
+last_update_time = time.time()
+
+
 # 更新函数
 def update():
+    global last_update_time
+    current_time = time.time()
+    time_diff = current_time - last_update_time
+    last_update_time = current_time
+    print(f"Time difference between updates: {time_diff:.4f} seconds")
+    
     for i, ax in enumerate(axes):
         Z = np.exp(-((X - centers[i][0]) ** 2 + (Y - centers[i][1]) ** 2) / (2 * (radii[i] ** 2)))
         background_gradients[i].set_array(Z.ravel())
         texts[i].set_position((0.05, 0.9))
         texts[i].set_text(f'T: {temperature[i]}')
-    fig.canvas.draw_idle()
+    # fig.canvas.draw_idle()
 
 # 函数：从URL获取数据并更新图表
 def fetch_data_and_update(url):
     global axes
     response = requests.get(url)
-
+    print(response)
     if response.status_code == 200:
-        data = response.json()
-        sensors = data
+        sensors = response.json()
+        # print(sensors)
         
         # 压缩数据并根据centers进行偏移
-        for i, sensor in enumerate(sensors.values()):
-            centers[i] = (defaultCenters[i][0] + abs(sensor['x']) / range * 0.2 - 0.1, defaultCenters[i][1] + abs(sensor['y']) / range * 0.2 - 0.1)
-            radii[i] = abs(sensor['z']) / range * 0.1 - 0.05
+        for i, (key, sensor) in enumerate(sensors.items()):
+            if key == "timestamp":
+                continue
+            centers[i] = (defaultCenters[i][0] + abs(sensor['x']) / range * 0.2, defaultCenters[i][1] + abs(sensor['y']) / range * 0.2)
+            radii[i] = abs(sensor['z']) / range * 0.3  # Adjust this value to control the spread
             temperature[i] = sensor['t']
         update()
     else:
@@ -75,13 +88,12 @@ def fetch_data_and_update(url):
 
 # 示例URL
 # url = "http://127.0.0.1:5000/api/heatmap_data"
-url = "http://192.168.4.1/"
-
+url = "http://192.168.4.1/data"
 
 # 定时器函数，每秒请求一次数据
 def periodic_fetch():
     fetch_data_and_update(url)
-    threading.Timer(1, periodic_fetch).start()
+    threading.Timer(0.1, periodic_fetch).start()
 
 # 启动定时器
 periodic_fetch()

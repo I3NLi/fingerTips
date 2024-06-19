@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Heatmap</title>
+    <style>
+        .canvas-container {
+            display: flex;
+            justify-content: space-around;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+        .sensor-title {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas-container">
+        <div>
+            <div class="sensor-title">Sensor 1</div>
+            <canvas id="canvas0" width="500" height="500"></canvas>
+        </div>
+        <div>
+            <div class="sensor-title">Sensor 2</div>
+            <canvas id="canvas1" width="500" height="500"></canvas>
+        </div>
+        <div>
+            <div class="sensor-title">Sensor 3</div>
+            <canvas id="canvas2" width="500" height="500"></canvas>
+        </div>
+        <div>
+            <div class="sensor-title">Sensor 4</div>
+            <canvas id="canvas3" width="500" height="500"></canvas>
+        </div>
+        <div>
+            <div class="sensor-title">Sensor 5</div>
+            <canvas id="canvas4" width="500" height="500"></canvas>
+        </div>
+    </div>
+    <script>
+        const defaultCenters = [{ x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }];
+        const defaultRadii = [0.0, 0.0, 0.0, 0.0, 0.0];
+
+        const range = 255;
+        const centers = [{ x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }];
+        const radii = [0.1, 0.1, 0.1, 0.1, 0.1];
+        const temperature = [0, 0, 0, 0, 0];
+
+        const canvases = [];
+        for (let i = 0; i < 5; i++) {
+            canvases.push(document.getElementById(`canvas${i}`).getContext('2d'));
+        }
+
+        function interpolateColor(value) {
+            const r = Math.floor(255 * value);
+            const g = Math.floor(255 * (1 - value));
+            const b = Math.floor(255 * (1 - value));
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function drawHeatmap(ctx, center, radius, temp) {
+            const imageData = ctx.createImageData(500, 500);
+            const data = imageData.data;
+
+            for (let x = 0; x < 500; x++) {
+                for (let y = 0; y < 500; y++) {
+                    const dx = (x / 500 - center.x) * 500;
+                    const dy = (y / 500 - center.y) * 500;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const intensity = Math.exp(-dist * dist / (2 * radius * radius * 2500));
+
+                    const index = (y * 500 + x) * 4;
+                    const color = interpolateColor(intensity);
+
+                    const rgb = color.match(/\d+/g).map(Number);
+                    data[index] = rgb[0]; // R
+                    data[index + 1] = rgb[1]; // G
+                    data[index + 2] = rgb[2]; // B
+                    data[index + 3] = 255; // A
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(10, 10, 70, 30);
+            ctx.fillStyle = 'white';
+            ctx.fillText(`T: ${temp}`, 20, 30);
+        }
+
+        function updateHeatmaps() {
+            for (let i = 0; i < 5; i++) {
+                drawHeatmap(canvases[i], centers[i], radii[i], temperature[i]);
+            }
+        }
+
+        const source = new EventSource('http://192.168.4.1/data');
+
+        source.onmessage = function(event) {
+            const sensors = JSON.parse(event.data);
+            let i = 0;
+
+            for (const key in sensors) {
+                if (key === "timestamp") continue;
+                const sensor = sensors[key];
+                centers[i].x = defaultCenters[i].x + Math.abs(sensor.x) / range * 0.2;
+                centers[i].y = defaultCenters[i].y + Math.abs(sensor.y) / range * 0.2;
+                radii[i] = Math.abs(sensor.z) / range * 0.3;
+                temperature[i] = sensor.t;
+                i++;
+            }
+
+            updateHeatmaps();
+        };
+    </script>
+</body>
+</html>
