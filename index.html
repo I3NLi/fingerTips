@@ -8,7 +8,7 @@
   <div id="sensorData"></div>
   <script>
     if (!!window.EventSource) {
-      var source = new EventSource('http://192.168.4.1');
+      var source = new EventSource('http://192.168.4.1/sse');
 
       source.onmessage = function(event) {
         document.getElementById("sensorData").innerHTML = event.data;
