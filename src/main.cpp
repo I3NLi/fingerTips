@@ -16,6 +16,7 @@ TLE493D* sensors[NUM_SENSORS];
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
   Serial.println("Fingertips demo");
 
   // Connect to Wi-Fi network with SSID and password
@@ -29,7 +30,7 @@ void setup() {
   // 初始化每个传感器
   for (int i = 0; i < NUM_SENSORS; i++) {
     sensors[i] = new TLE493D(SDA_PINS[i], SCL_PIN);
-    // sensors[i]->begin();
+    sensors[i]->begin();
   }
 
   Serial.println("Bx, By, Bz, T, debug");
@@ -92,7 +93,9 @@ void loop() {
         json.reserve(256);  // Reserve memory to avoid fragmentation
         json = "{\"timestamp\":" + String(millis()) + ","; // Add timestamp
         for (int i = 0; i < NUM_SENSORS; i++) {
-          SensorData data = sensors[i]->readMockData();
+          SensorData data = sensors[i]->readData();
+          // SensorData data = sensors[i]->readMockData();
+
           json += "\"sensor" + String(i) + "\":" + sensors[i]->getDataAsJson(data);
           if (i < NUM_SENSORS - 1) json += ",";
         }
@@ -104,9 +107,8 @@ void loop() {
         client.print("\n\n");  // Each SSE message is terminated with a double newline
 
         // Print the JSON data to serial monitor (optional for debugging)
-        Serial.println(json);
+        // Serial.println(json);
 
-        delay(100); // Send data every second, adjust as needed
       }
     } else if (requestPath == "/data") {
       // Send one-time JSON data response
@@ -114,7 +116,9 @@ void loop() {
       json.reserve(256);  // Reserve memory to avoid fragmentation
       json = "{\"timestamp\":" + String(millis()) + ","; // Add timestamp
       for (int i = 0; i < NUM_SENSORS; i++) {
-        SensorData data = sensors[i]->readMockData();
+        // SensorData data = sensors[i]->readMockData();
+        SensorData data = sensors[i]->readData();
+
         json += "\"sensor" + String(i) + "\":" + sensors[i]->getDataAsJson(data);
         if (i < NUM_SENSORS - 1) json += ",";
       }
@@ -122,12 +126,12 @@ void loop() {
 
       // Send JSON response
       client.println(json);
-      Serial.println(json);
+      // Serial.println(json);
 
       // Close the connection
       client.stop();
-      Serial.println("Client disconnected.");
-      Serial.println("");
+      // Serial.println("Client disconnected.");
+      // Serial.println("");
     }
   }
 }

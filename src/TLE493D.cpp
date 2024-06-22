@@ -23,6 +23,7 @@ void TLE493D::configureSensor() {
 
 void TLE493D::calibrate() {
   wire.begin(sdaPin, sclPin, 400000);
+  delay(1000);
 
   uint8_t buf[7];
   wire.requestFrom(address, (uint8_t)7);
@@ -53,10 +54,9 @@ void TLE493D::calibrate() {
 }
 
 SensorData TLE493D::readData() {
-    wire.begin(sdaPin, sclPin, 400000);
-
-
+  wire.begin(sdaPin, sclPin, 400000);
   SensorData data;
+  // delay(2);
   wire.requestFrom(address, (uint8_t)7);
   uint8_t buf[7];
   for (uint8_t i = 0; i < 7; i++) {
