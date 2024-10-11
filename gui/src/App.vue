@@ -95,8 +95,8 @@ Change here to connect with real-world data, the results have to be normalized (
 */
 setInterval(function () {
   for (let i = 0; i < data.value.length; i++) {
-    data.value[i][0] = rawdata[i][0] + (Math.random() * 0.1 - 0.2);
-    data.value[i][1] = rawdata[i][1] + (Math.random() * 0.1 - 0.2);
+    // data.value[i][0] = rawdata[i][0] + (Math.random() * 0.1 - 0.2);
+    // data.value[i][1] = rawdata[i][1] + (Math.random() * 0.1 - 0.2);
     data.value[i][2] = Math.random();
     data.value[i][3] = Math.random();
   }
